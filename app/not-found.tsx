@@ -1,8 +1,13 @@
+'use client'
+
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { TrendingUp, Home, ArrowLeft } from 'lucide-react'
 
 export default function NotFound() {
+  const router = useRouter()
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="border-b border-border bg-card">
@@ -30,7 +35,7 @@ export default function NotFound() {
                 返回首页
               </Link>
             </Button>
-            <Button variant="outline" onClick={() => history.back()} className="gap-2">
+            <Button variant="outline" onClick={() => router.back()} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               返回上页
             </Button>
