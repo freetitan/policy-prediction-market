@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { TrendingUp, User as UserIcon, LogOut, Menu, X, Coins, ShieldCheck } from 'lucide-react'
+import { TrendingUp, User as UserIcon, LogOut, Menu, X, Coins, ShieldCheck, Shield } from 'lucide-react'
 
 export function Navbar() {
   const [user, setUser] = useState<User | null>(null)
@@ -75,30 +75,43 @@ export function Navbar() {
   }
 
   const [isVerifier, setIsVerifier] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     if (!user) {
       setIsVerifier(false)
+      setIsAdmin(false)
       return
     }
     
-    const checkVerifier = async () => {
-      const { data } = await supabase
+    const checkRoles = async () => {
+      // 检查是否为验证者
+      const { data: verifierData } = await supabase
         .from('verifiers')
         .select('id')
         .eq('user_id', user.id)
         .eq('active', true)
         .single()
-      setIsVerifier(!!data)
+      setIsVerifier(!!verifierData)
+
+      // 检查是否为管理员
+      const { data: adminData } = await supabase
+        .from('admins')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('active', true)
+        .single()
+      setIsAdmin(!!adminData)
     }
     
-    checkVerifier()
+    checkRoles()
   }, [user, supabase])
 
   const navLinks = [
     { href: '/', label: '市场' },
     { href: '/leaderboard', label: '排行榜' },
     ...(isVerifier ? [{ href: '/verify', label: '验证', icon: ShieldCheck }] : []),
+    ...(isAdmin ? [{ href: '/admin', label: '管理', icon: Shield }] : []),
   ]
 
   return (
