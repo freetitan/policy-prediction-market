@@ -157,20 +157,18 @@ export function Navbar() {
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="gap-2 h-9 px-3 border-border bg-background hover:bg-accent hover:text-accent-foreground"
+                  <button
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
                       <UserIcon className="h-3.5 w-3.5" />
                     </div>
-                    <span className="max-w-[100px] truncate text-sm">
+                    <span className="max-w-[100px] truncate text-sm text-foreground">
                       {profile.display_name || '用户'}
                     </span>
-                  </Button>
+                  </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-popover">
+                <DropdownMenuContent align="end" className="w-48 bg-popover border border-border">
                   <DropdownMenuItem asChild>
                     <Link href="/profile" className="flex cursor-pointer items-center gap-2 px-2 py-1.5">
                       <UserIcon className="h-4 w-4" />
@@ -189,13 +187,19 @@ export function Navbar() {
               </DropdownMenu>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="h-9 hover:bg-accent" asChild>
-                <Link href="/auth/login">登录</Link>
-              </Button>
-              <Button size="sm" className="h-9" asChild>
-                <Link href="/auth/sign-up">注册</Link>
-              </Button>
+            <div className="flex items-center gap-3">
+              <Link 
+                href="/auth/login"
+                className="inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors border border-input bg-background shadow-sm"
+              >
+                登录
+              </Link>
+              <Link 
+                href="/auth/sign-up"
+                className="inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 transition-colors shadow-sm"
+              >
+                注册
+              </Link>
             </div>
           )}
         </div>
