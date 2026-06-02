@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { TrendingUp, User as UserIcon, LogOut, Menu, X, Coins } from 'lucide-react'
+import { TrendingUp, User as UserIcon, LogOut, Menu, X, Coins, ShieldCheck } from 'lucide-react'
 
 export function Navbar() {
   const [user, setUser] = useState<User | null>(null)
@@ -74,9 +74,31 @@ export function Navbar() {
     router.refresh()
   }
 
+  const [isVerifier, setIsVerifier] = useState(false)
+
+  useEffect(() => {
+    if (!user) {
+      setIsVerifier(false)
+      return
+    }
+    
+    const checkVerifier = async () => {
+      const { data } = await supabase
+        .from('verifiers')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('active', true)
+        .single()
+      setIsVerifier(!!data)
+    }
+    
+    checkVerifier()
+  }, [user, supabase])
+
   const navLinks = [
     { href: '/', label: '市场' },
     { href: '/leaderboard', label: '排行榜' },
+    ...(isVerifier ? [{ href: '/verify', label: '验证', icon: ShieldCheck }] : []),
   ]
 
   return (
@@ -96,12 +118,13 @@ export function Navbar() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  'rounded-md px-3 py-2 text-sm font-medium transition-colors flex items-center gap-1.5',
                   pathname === link.href
                     ? 'bg-secondary text-foreground'
                     : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
                 )}
               >
+                {link.icon && <link.icon className="h-4 w-4" />}
                 {link.label}
               </Link>
             ))}
