@@ -1,19 +1,24 @@
 -- 添加管理员账号
--- 使用方法：将 'your-email@example.com' 替换为你的实际邮箱地址，然后在 Supabase SQL Editor 中执行
+-- 邮箱：unimaster@gmail.com
 
 -- 第一步：找到你的 user_id（可选，用于验证）
-SELECT id, email, display_name 
-FROM profiles 
-WHERE email = 'your-email@example.com';
+SELECT 
+    au.id,
+    au.email,
+    p.display_name
+FROM auth.users au
+LEFT JOIN profiles p ON au.id = p.id
+WHERE au.email = 'unimaster@gmail.com';
 
--- 第二步：添加为管理员（替换邮箱地址）
+-- 第二步：添加为管理员
 INSERT INTO admins (user_id, username, role)
 SELECT 
-    id,
-    COALESCE(display_name, 'Admin'),
+    au.id,
+    COALESCE(p.display_name, 'Admin'),
     'super_admin'
-FROM profiles
-WHERE email = 'your-email@example.com'
+FROM auth.users au
+LEFT JOIN profiles p ON au.id = p.id
+WHERE au.email = 'unimaster@gmail.com'
 ON CONFLICT (user_id) DO NOTHING;
 
 -- 第三步：验证是否添加成功
@@ -22,8 +27,10 @@ SELECT
     a.username,
     a.role,
     a.active,
-    p.email,
-    p.display_name
+    au.email,
+    p.display_name,
+    a.created_at
 FROM admins a
-JOIN profiles p ON a.user_id = p.id
-WHERE p.email = 'your-email@example.com';
+JOIN auth.users au ON a.user_id = au.id
+LEFT JOIN profiles p ON a.user_id = p.id
+WHERE au.email = 'unimaster@gmail.com';

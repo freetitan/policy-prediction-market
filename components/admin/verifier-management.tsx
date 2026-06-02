@@ -43,9 +43,11 @@ interface Verifier {
   reputation: number
   active: boolean
   created_at: string
+  user: {
+    email: string
+  }
   profiles: {
     display_name: string | null
-    email: string
   }
 }
 
@@ -71,9 +73,11 @@ export function VerifierManagement({ adminId }: VerifierManagementProps) {
         .from('verifiers')
         .select(`
           *,
-          profiles:user_id (
-            display_name,
+          user:user_id!inner (
             email
+          ),
+          profiles:user_id (
+            display_name
           )
         `)
         .order('created_at', { ascending: false })
@@ -195,7 +199,7 @@ export function VerifierManagement({ adminId }: VerifierManagementProps) {
                       {verifier.profiles?.display_name || '未设置昵称'}
                     </CardTitle>
                     <CardDescription className="mt-1">
-                      {verifier.profiles?.email}
+                      {verifier.user?.email}
                     </CardDescription>
                     <p className="text-sm text-muted-foreground mt-2">
                       加入时间: {formatDate(verifier.created_at)}
@@ -270,29 +274,55 @@ function AddVerifierForm({
     setFoundUser(null)
 
     try {
-      // 通过邮箱查找用户
-      const { data: profiles, error: searchError } = await supabase
-        .from('profiles')
-        .select('id, email, display_name')
-        .eq('email', email.trim().toLowerCase())
-        .single()
+      // 通过邮箱查找用户（从 auth.users 表）
+      const { data: users, error: searchError } = await supabase.rpc('get_user_by_email', {
+        user_email: email.trim().toLowerCase()
+      })
 
-      if (searchError || !profiles) {
+      if (searchError) {
+        // 如果 RPC 不存在，尝试直接查询（需要合适的权限）
+        const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers()
+        
+        if (authError) {
+          throw new Error('无法搜索用户，请确保您有足够的权限')
+        }
+
+        const foundAuthUser = authUsers?.find(u => u.email === email.trim().toLowerCase())
+        if (!foundAuthUser) {
+          throw new Error('未找到该用户')
+        }
+
+        // 获取 profile 信息
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', foundAuthUser.id)
+          .single()
+
+        setFoundUser({
+          id: foundAuthUser.id,
+          email: foundAuthUser.email || '',
+          display_name: profile?.display_name || null
+        })
+        return
+      }
+
+      if (!users || users.length === 0) {
         throw new Error('未找到该用户')
       }
+
+      setFoundUser(users[0])
 
       // 检查是否已经是验证者
       const { data: existingVerifier } = await supabase
         .from('verifiers')
         .select('id')
-        .eq('user_id', profiles.id)
+        .eq('user_id', users[0].id)
         .single()
 
       if (existingVerifier) {
         throw new Error('该用户已经是验证者')
       }
-
-      setFoundUser(profiles)
     } catch (err) {
       setError(err instanceof Error ? err.message : '搜索失败')
     } finally {

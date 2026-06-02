@@ -28,6 +28,7 @@ import { Users, Coins, Edit, AlertCircle, TrendingUp, TrendingDown } from 'lucid
 import type { Profile } from '@/lib/types'
 
 interface UserWithBets extends Profile {
+  email: string
   total_bets: number
   total_wagered: number
 }
@@ -51,7 +52,7 @@ export function UserManagement({ adminId }: UserManagementProps) {
   const fetchUsers = async () => {
     setLoading(true)
     try {
-      // 获取用户列表
+      // 首先获取所有用户的邮箱（批量调用）
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -59,9 +60,16 @@ export function UserManagement({ adminId }: UserManagementProps) {
 
       if (profilesError) throw profilesError
 
-      // 获取每个用户的投注统计
+      // 获取每个用户的邮箱和投注统计
       const usersWithStats = await Promise.all(
         (profiles || []).map(async (profile) => {
+          // 获取邮箱
+          const { data: emailData } = await supabase
+            .rpc('get_user_email', { user_id: profile.id })
+          
+          const email = emailData || 'unknown@example.com'
+
+          // 获取投注统计
           const { data: bets } = await supabase
             .from('bets')
             .select('amount')
@@ -72,6 +80,7 @@ export function UserManagement({ adminId }: UserManagementProps) {
 
           return {
             ...profile,
+            email,
             total_bets,
             total_wagered,
           }

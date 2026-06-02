@@ -11,36 +11,38 @@ SELECT
     a.username,
     a.role,
     a.active,
-    p.email,
+    au.email,
     p.display_name,
     a.created_at,
     a.last_login
 FROM admins a
-JOIN profiles p ON a.user_id = p.id
+JOIN auth.users au ON a.user_id = au.id
+LEFT JOIN profiles p ON a.user_id = p.id
 ORDER BY a.created_at DESC;
 
--- 添加管理员（替换邮箱地址）
+-- 添加管理员（邮箱：unimaster@gmail.com）
 INSERT INTO admins (user_id, username, role)
 SELECT 
-    id,
-    COALESCE(display_name, 'Admin'),
+    au.id,
+    COALESCE(p.display_name, 'Admin'),
     'super_admin'
-FROM profiles
-WHERE email = 'your-email@example.com'
+FROM auth.users au
+LEFT JOIN profiles p ON au.id = p.id
+WHERE au.email = 'unimaster@gmail.com'
 ON CONFLICT (user_id) DO NOTHING;
 
 -- 停用管理员（替换邮箱地址）
 UPDATE admins
 SET active = false
 WHERE user_id IN (
-    SELECT id FROM profiles WHERE email = 'admin-email@example.com'
+    SELECT id FROM auth.users WHERE email = 'admin-email@example.com'
 );
 
 -- 激活管理员（替换邮箱地址）
 UPDATE admins
 SET active = true
 WHERE user_id IN (
-    SELECT id FROM profiles WHERE email = 'admin-email@example.com'
+    SELECT id FROM auth.users WHERE email = 'admin-email@example.com'
 );
 
 -- ========================================
@@ -50,33 +52,34 @@ WHERE user_id IN (
 -- 查看所有验证者
 SELECT 
     v.id,
-    p.email,
+    au.email,
     p.display_name,
     v.reputation,
     v.active,
     v.created_at
 FROM verifiers v
-JOIN profiles p ON v.user_id = p.id
+JOIN auth.users au ON v.user_id = au.id
+LEFT JOIN profiles p ON v.user_id = p.id
 ORDER BY v.created_at DESC;
 
 -- 添加验证者（替换邮箱地址）
 INSERT INTO verifiers (user_id)
-SELECT id FROM profiles
+SELECT id FROM auth.users
 WHERE email = 'verifier-email@example.com'
 ON CONFLICT (user_id) DO NOTHING;
 
 -- 查看验证者的验证记录
 SELECT 
     v.user_id,
-    p.email,
+    au.email,
     COUNT(*) as total_votes,
     SUM(CASE WHEN vv.vote = true THEN 1 ELSE 0 END) as yes_votes,
     SUM(CASE WHEN vv.vote = false THEN 1 ELSE 0 END) as no_votes,
     v.reputation
 FROM verifiers v
-JOIN profiles p ON v.user_id = p.id
+JOIN auth.users au ON v.user_id = au.id
 LEFT JOIN verification_votes vv ON v.id = vv.verifier_id
-GROUP BY v.user_id, p.email, v.reputation
+GROUP BY v.user_id, au.email, v.reputation
 ORDER BY total_votes DESC;
 
 -- ========================================
@@ -128,14 +131,15 @@ SELECT
     m.title,
     m.yes_pool,
     m.no_pool,
-    p.email,
+    au.email,
     p.display_name,
     b.position,
     b.amount,
     b.created_at
 FROM markets m
 JOIN bets b ON m.id = b.market_id
-JOIN profiles p ON b.user_id = p.id
+JOIN auth.users au ON b.user_id = au.id
+LEFT JOIN profiles p ON b.user_id = p.id
 WHERE m.id = 'market-id-here'  -- 替换为实际市场 ID
 ORDER BY b.created_at DESC;
 
@@ -145,36 +149,37 @@ ORDER BY b.created_at DESC;
 
 -- 查看用户排行榜（前20名）
 SELECT 
-    p.email,
+    au.email,
     p.display_name,
     p.points,
     COUNT(b.id) as total_bets,
     COALESCE(SUM(b.amount), 0) as total_wagered,
     p.created_at
 FROM profiles p
+JOIN auth.users au ON p.id = au.id
 LEFT JOIN bets b ON p.id = b.user_id
-GROUP BY p.id
+GROUP BY p.id, au.email, p.display_name, p.points, p.created_at
 ORDER BY p.points DESC
 LIMIT 20;
 
 -- 调整用户积分（增加）
 UPDATE profiles
 SET points = points + 1000  -- 增加的数量
-WHERE email = 'user-email@example.com';
+WHERE id IN (SELECT id FROM auth.users WHERE email = 'unimaster@gmail.com');
 
 -- 调整用户积分（减少）
 UPDATE profiles
 SET points = GREATEST(points - 500, 0)  -- 减少的数量，确保不小于0
-WHERE email = 'user-email@example.com';
+WHERE id IN (SELECT id FROM auth.users WHERE email = 'user-email@example.com');
 
 -- 设置用户积分为指定值
 UPDATE profiles
 SET points = 5000  -- 新的积分值
-WHERE email = 'user-email@example.com';
+WHERE id IN (SELECT id FROM auth.users WHERE email = 'user-email@example.com');
 
 -- 查看用户的所有投注
 SELECT 
-    p.email,
+    au.email,
     p.display_name,
     m.title as market_title,
     b.position,
@@ -188,9 +193,10 @@ SELECT
     END as result,
     b.created_at
 FROM profiles p
+JOIN auth.users au ON p.id = au.id
 JOIN bets b ON p.id = b.user_id
 JOIN markets m ON b.market_id = m.id
-WHERE p.email = 'user-email@example.com'  -- 替换邮箱
+WHERE au.email = 'user-email@example.com'  -- 替换邮箱
 ORDER BY b.created_at DESC;
 
 -- ========================================
@@ -245,10 +251,10 @@ SELECT
     al.details,
     al.created_at,
     a.username as admin_username,
-    p.email as admin_email
+    au.email as admin_email
 FROM admin_logs al
 JOIN admins a ON al.admin_id = a.id
-JOIN profiles p ON a.user_id = p.id
+JOIN auth.users au ON a.user_id = au.id
 ORDER BY al.created_at DESC
 LIMIT 50;
 
@@ -267,8 +273,8 @@ SELECT
     al.created_at
 FROM admin_logs al
 JOIN admins a ON al.admin_id = a.id
-JOIN profiles p ON a.user_id = p.id
-WHERE p.email = 'admin-email@example.com'
+JOIN auth.users au ON a.user_id = au.id
+WHERE au.email = 'unimaster@gmail.com'
 ORDER BY al.created_at DESC;
 
 -- ========================================
@@ -276,9 +282,14 @@ ORDER BY al.created_at DESC;
 -- ========================================
 
 -- 查找异常数据：积分为负的用户
-SELECT id, email, display_name, points
-FROM profiles
-WHERE points < 0;
+SELECT 
+    p.id, 
+    au.email, 
+    p.display_name, 
+    p.points
+FROM profiles p
+JOIN auth.users au ON p.id = au.id
+WHERE p.points < 0;
 
 -- 查找异常数据：结束日期已过但未结算的市场
 SELECT id, title, end_date, yes_pool, no_pool
