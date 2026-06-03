@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { BetForm } from '@/components/bet-form'
+import { PredictionChart } from '@/components/prediction-chart'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -55,6 +56,11 @@ export default async function MarketPage({ params }: MarketPageProps) {
     .from('bets')
     .select('*', { count: 'exact' })
     .eq('market_id', id)
+
+  // 计算独立预测者数量
+  const uniquePredictors = bets 
+    ? new Set(bets.map(bet => bet.user_id)).size 
+    : 0
 
   // 获取用户在该市场的投注
   let userBets: Bet[] = []
@@ -201,6 +207,14 @@ export default async function MarketPage({ params }: MarketPageProps) {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Prediction Chart */}
+            <PredictionChart 
+              marketId={id}
+              currentProbability={yesPercentage / 100}
+              totalVolume={totalPool}
+              uniquePredictors={uniquePredictors}
+            />
 
             {/* User's Bets */}
             {userBets.length > 0 && (
