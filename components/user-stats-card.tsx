@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { ReputationBadge } from '@/components/ui/reputation-badge'
+import { ReputationBadge } from '@/components/reputation-badge'
 import { Target, TrendingUp, Award, BarChart3 } from 'lucide-react'
 import type { Profile } from '@/lib/types'
 
