@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { BetForm } from '@/components/bet-form'
 import { PredictionChart } from '@/components/prediction-chart'
+import { CommentsSection } from '@/components/comments-section'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -289,6 +290,9 @@ export default async function MarketPage({ params }: MarketPageProps) {
                 </dl>
               </CardContent>
             </Card>
+
+            {/* Comments Section */}
+            <CommentsSection marketId={id} userProfile={userProfile} />
           </div>
 
           {/* Sidebar - Bet Form */}

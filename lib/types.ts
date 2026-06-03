@@ -64,6 +64,28 @@ export interface UserStatistics {
   leaderboard_rank: number
 }
 
+export interface Comment {
+  id: string
+  market_id: string
+  user_id: string
+  parent_id: string | null
+  content: string
+  likes_count: number
+  created_at: string
+  updated_at: string
+  is_edited: boolean
+  is_deleted: boolean
+}
+
+export interface CommentWithDetails extends Comment {
+  user_display_name: string | null
+  user_rank_tier: string | null
+  user_prediction_score: number | null
+  reply_count: number
+  user_liked?: boolean
+  replies?: CommentWithDetails[]
+}
+
 export interface Market {
   id: string
   title: string
