@@ -146,7 +146,10 @@ export function Navbar() {
 
         <div className="hidden items-center gap-4 md:flex">
           {loading ? (
-            <div className="h-9 w-24 animate-pulse rounded-md bg-secondary" />
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
+              <div className="h-8 w-16 animate-pulse rounded-md bg-muted" />
+            </div>
           ) : user && profile ? (
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 rounded-full bg-secondary px-3 py-1.5">
@@ -188,18 +191,16 @@ export function Navbar() {
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <Link 
-                href="/auth/login"
-                className="inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors border border-input bg-background shadow-sm"
-              >
-                登录
-              </Link>
-              <Link 
-                href="/auth/sign-up"
-                className="inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 transition-colors shadow-sm"
-              >
-                注册
-              </Link>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/auth/login">
+                  登录
+                </Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href="/auth/sign-up">
+                  注册
+                </Link>
+              </Button>
             </div>
           )}
         </div>
@@ -221,17 +222,23 @@ export function Navbar() {
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
-                  'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  'rounded-md px-3 py-2 text-sm font-medium transition-colors flex items-center gap-1.5',
                   pathname === link.href
                     ? 'bg-secondary text-foreground'
                     : 'text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
                 )}
               >
+                {link.icon && <link.icon className="h-4 w-4" />}
                 {link.label}
               </Link>
             ))}
             <hr className="my-2 border-border" />
-            {user && profile ? (
+            {loading ? (
+              <div className="flex flex-col gap-2 pt-2">
+                <div className="h-8 w-full animate-pulse rounded-md bg-muted" />
+                <div className="h-8 w-full animate-pulse rounded-md bg-muted" />
+              </div>
+            ) : user && profile ? (
               <>
                 <div className="flex items-center justify-between px-3 py-2">
                   <span className="text-sm text-muted-foreground">积分</span>
