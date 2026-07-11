@@ -11,6 +11,8 @@ import { MIN_BET_AMOUNT } from '@/lib/types'
 import type { Market, Profile } from '@/lib/types'
 import { TrendingUp, TrendingDown, AlertCircle, Coins } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { BetConfirmationDialog } from '@/components/bet-confirmation-dialog'
+import { toast } from 'sonner'
 
 interface BetFormProps {
   market: Market
@@ -23,6 +25,7 @@ export function BetForm({ market, userProfile, onBetPlaced }: BetFormProps) {
   const [amount, setAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -44,7 +47,19 @@ export function BetForm({ market, userProfile, onBetPlaced }: BetFormProps) {
     const share = betAmount / newPool
     const potentialWin = oppositePool * share
 
-    return betAmount + potentialWin
+    return Math.floor(betAmount + potentialWin)
+  }
+
+  const calculateOdds = () => {
+    const betAmount = parseInt(amount)
+    if (isNaN(betAmount) || betAmount <= 0) return 1
+
+    const currentPool = position ? market.yes_pool : market.no_pool
+    const oppositePool = position ? market.no_pool : market.yes_pool
+    const totalPool = currentPool + oppositePool + betAmount
+    
+    if (totalPool === 0) return 1
+    return totalPool / (currentPool + betAmount)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,8 +82,15 @@ export function BetForm({ market, userProfile, onBetPlaced }: BetFormProps) {
       return
     }
 
-    setIsLoading(true)
     setError(null)
+    setShowConfirmDialog(true)
+  }
+
+  const handleConfirmBet = async () => {
+    if (!userProfile || position === null) return
+
+    const betAmount = parseInt(amount)
+    setIsLoading(true)
 
     try {
       const { error: rpcError } = await supabase.rpc('place_bet', {
@@ -80,12 +102,20 @@ export function BetForm({ market, userProfile, onBetPlaced }: BetFormProps) {
 
       if (rpcError) throw rpcError
 
+      toast.success('投注成功！', {
+        description: `已投注 ${betAmount} 积分到"${position ? '是' : '否'}"`,
+      })
+
       setAmount('')
       setPosition(null)
+      setShowConfirmDialog(false)
       onBetPlaced?.()
       router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : '投注失败，请重试')
+      const errorMessage = err instanceof Error ? err.message : '投注失败，请重试'
+      setError(errorMessage)
+      toast.error('投注失败', { description: errorMessage })
+      setShowConfirmDialog(false)
     } finally {
       setIsLoading(false)
     }
@@ -232,6 +262,23 @@ export function BetForm({ market, userProfile, onBetPlaced }: BetFormProps) {
             {isLoading ? '处理中...' : '确认投注'}
           </Button>
         </form>
+
+        {/* 确认对话框 */}
+        {userProfile && position !== null && amount && (
+          <BetConfirmationDialog
+            open={showConfirmDialog}
+            onOpenChange={setShowConfirmDialog}
+            amount={parseInt(amount)}
+            direction={position}
+            currentOdds={calculateOdds()}
+            userBalance={userProfile.points}
+            marketTitle={market.title}
+            expectedReturn={calculatePotentialReturn()}
+            currentProbability={position ? yesPercentage : 100 - yesPercentage}
+            onConfirm={handleConfirmBet}
+            isLoading={isLoading}
+          />
+        )}
       </CardContent>
     </Card>
   )

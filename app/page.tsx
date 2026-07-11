@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/navbar'
-import { MarketCard } from '@/components/market-card'
 import { MarketFilters } from '@/components/market-filters'
+import { MarketsGrid } from '@/components/markets-grid'
 import { WELCOME_BONUS } from '@/lib/types'
 import type { Market, MarketCategory } from '@/lib/types'
 import { TrendingUp, Users, Coins, BarChart3 } from 'lucide-react'
@@ -105,11 +105,7 @@ export default async function Home({ searchParams }: HomeProps) {
         </div>
 
         {markets && markets.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {markets.map((market: Market) => (
-              <MarketCard key={market.id} market={market} />
-            ))}
-          </div>
+          <MarketsGrid markets={markets} />
         ) : (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/50 py-16">
             <BarChart3 className="h-12 w-12 text-muted-foreground/50" />

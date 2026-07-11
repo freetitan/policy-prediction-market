@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { TrendingUp, User as UserIcon, LogOut, Menu, X, Coins, ShieldCheck, Shield } from 'lucide-react'
+import { NotificationBell } from '@/components/notification-bell'
 
 export function Navbar() {
   const [user, setUser] = useState<User | null>(null)
@@ -158,6 +159,7 @@ export function Navbar() {
                   {profile.points.toLocaleString()}
                 </span>
               </div>
+              <NotificationBell userId={user.id} />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
